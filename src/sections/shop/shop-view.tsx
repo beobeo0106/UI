@@ -14,9 +14,9 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Badge from '@mui/material/Badge';
 import IconButton from '@mui/material/IconButton';
 import Divider from '@mui/material/Divider';
+import Container from '@mui/material/Container'; // <-- Đã thay thế DashboardContent bằng Container
 
 import { fCurrency } from 'src/utils/format-number';
-import Container from '@mui/material/Container';
 import { Iconify } from 'src/components/iconify';
 
 export function ShopView() {
@@ -73,14 +73,13 @@ export function ShopView() {
       alert("Giỏ hàng của bạn đang trống!");
       return;
     }
-    // Ở đây bạn có thể gọi API tạo đơn hàng (Order)
     alert(`Thanh toán thành công tổng số tiền: ${fCurrency(totalAmount)}`);
     setCart([]); // Xóa giỏ hàng sau khi thanh toán
     setIsCartOpen(false);
   };
 
   return (
-    <Container maxWidth="xl" sx="{{" py: 5 }}>
+    <Container maxWidth="xl" sx={{ py: 5 }}>
       {/* Tiêu đề & Giỏ hàng */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 5 }}>
         <Typography variant="h4">Cửa Hàng</Typography>
