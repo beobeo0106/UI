@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "http://e-commerce-vnb.somee.com/api/:path*"
+    },
+    {
+      "source": "/uploads/:path*",
+      "destination": "http://e-commerce-vnb.somee.com/uploads/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
