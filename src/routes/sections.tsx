@@ -20,7 +20,7 @@ export const ProductsPage = lazy(() => import('src/pages/products'));
 export const Page404 = lazy(() => import('src/pages/page-not-found'));
 export const CategoriesPage = lazy(() => import('src/pages/categories'));
 
-// 👇 ĐÃ THÊM: Import trang Shop (Cửa hàng)
+// 👇 Import trang Shop 
 export const ShopPage = lazy(() => import('src/pages/shop'));
 
 const renderFallback = () => (
@@ -52,17 +52,22 @@ export const routesSection: RouteObject[] = [
         </Suspense>
       </DashboardLayout>
     ),
+    // Đây là khu vực "nhốt" các trang của Admin
     children: [
       { index: true, element: <DashboardPage /> },
       { path: 'user', element: <UserPage /> },
       { path: 'products', element: <ProductsPage /> },
       { path: 'categories', element: <CategoriesPage /> },
       { path: 'blog', element: <BlogPage /> },
-      // 👇 ĐÃ THÊM: Khai báo đường dẫn /shop
-      
     ],
   },
-  { path: 'shop', element: <ShopPage /> },
+  
+  // 👇 ĐÃ BỨNG SHOP RA KHỎI ADMIN (Đứng độc lập)
+  {
+    path: 'shop',
+    element: <ShopPage />,
+  },
+
   {
     path: 'sign-in',
     element: (
@@ -76,4 +81,4 @@ export const routesSection: RouteObject[] = [
     element: <Page404 />,
   },
   { path: '*', element: <Page404 /> },
-];  
+];
