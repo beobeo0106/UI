@@ -59,9 +59,10 @@ export const routesSection: RouteObject[] = [
       { path: 'categories', element: <CategoriesPage /> },
       { path: 'blog', element: <BlogPage /> },
       // 👇 ĐÃ THÊM: Khai báo đường dẫn /shop
-      { path: 'shop', element: <ShopPage /> },
+      
     ],
   },
+  { path: 'shop', element: <ShopPage /> },
   {
     path: 'sign-in',
     element: (

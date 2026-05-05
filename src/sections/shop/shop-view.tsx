@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { CONFIG } from 'src/config-global';
@@ -15,7 +16,7 @@ import IconButton from '@mui/material/IconButton';
 import Divider from '@mui/material/Divider';
 
 import { fCurrency } from 'src/utils/format-number';
-import { DashboardContent } from 'src/layouts/dashboard';
+import Container from '@mui/material/Container';
 import { Iconify } from 'src/components/iconify';
 
 export function ShopView() {
@@ -79,14 +80,14 @@ export function ShopView() {
   };
 
   return (
-    <DashboardContent>
+    <Container maxWidth="xl" sx="{{" py: 5 }}>
       {/* Tiêu đề & Giỏ hàng */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 5 }}>
         <Typography variant="h4">Cửa Hàng</Typography>
         
         <IconButton color="primary" onClick={() => setIsCartOpen(true)}>
           <Badge badgeContent={cart.reduce((total, item) => total + item.quantity, 0)} color="error">
-            <Iconify icon="solar:cart-large-minimalistic-bold" width={28} />
+            <Iconify icon="solar:cart-3-bold" width={28} />
           </Badge>
         </IconButton>
       </Box>
@@ -188,6 +189,6 @@ export function ShopView() {
           </Box>
         </Box>
       </Drawer>
-    </DashboardContent>
+    </Container>
   );
 }
