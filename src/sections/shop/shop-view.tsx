@@ -19,8 +19,10 @@ import InputBase from '@mui/material/InputBase';
 
 import { fCurrency } from 'src/utils/format-number';
 import { Iconify } from 'src/components/iconify';
+import { useRouter } from 'src/routes/hooks'; // Kéo useRouter vào để chuyển trang
 
 export function ShopView() {
+  const router = useRouter(); // Khởi tạo router
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<any[]>([]);
@@ -52,47 +54,85 @@ export function ShopView() {
 
   const handleRemoveFromCart = (productId: string) => setCart((prev) => prev.filter((item) => item.id !== productId));
   const totalAmount = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const handleCheckout = () => {
+
+  // 👇 ĐÃ THÊM: Hàm xử lý Đăng Xuất
+  const handleLogout = () => {
+    localStorage.removeItem('accessToken'); // Xóa vé qua cửa
+    router.push('/sign-in'); // Đuổi về trang đăng nhập
+  };
+
+  // 👇 ĐÃ SỬA: Hàm tích hợp VNPAY
+  const handleCheckout = async () => {
     if (cart.length === 0) return alert("Giỏ hàng đang trống!");
-    alert(`Thanh toán thành công: ${fCurrency(totalAmount)}`);
-    setCart([]); setIsCartOpen(false);
+
+    try {
+      // Gọi API Backend C# để lấy link thanh toán VNPAY
+      // LƯU Ý: Bạn cần đổi '/api/v1/Payment/create-vnpay-url' thành đúng tên API của bạn
+      const response = await axios.post(`${CONFIG.serverUrl}/api/v1/Payment/create-vnpay-url`, {
+        amount: totalAmount,
+        orderInfo: "Thanh toán đơn hàng Cửa hàng Amazon",
+        // Bạn có thể truyền mảng `cart` xuống BE ở đây nếu cần tạo Order vào Database trước
+      }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}` // Gửi kèm token để BE biết ai đang mua
+        }
+      });
+
+      // Lấy link VNPAY từ Backend trả về
+      const paymentUrl = response.data.paymentUrl || response.data.url || response.data;
+
+      if (paymentUrl && typeof paymentUrl === 'string' && paymentUrl.startsWith('http')) {
+        // Chuyển hướng người dùng sang cổng VNPAY
+        window.location.href = paymentUrl; 
+      } else {
+        alert("Lỗi: Backend không trả về link thanh toán VNPAY hợp lệ!");
+      }
+
+    } catch (error) {
+      console.error("Lỗi khi kết nối VNPAY:", error);
+      alert("Đã xảy ra lỗi khi khởi tạo thanh toán VNPAY.");
+    }
   };
 
   return (
     <Box sx={{ bgcolor: '#eaeded', minHeight: '100vh', pb: 10 }}>
       {/* 1. AMAZON HEADER */}
       <Box sx={{ bgcolor: '#131921', color: 'white', px: 2, py: 1.5, display: 'flex', alignItems: 'center', gap: 3 }}>
-        {/* Logo giả lập */}
+        
         <Typography variant="h5" sx={{ fontWeight: 'bold', letterSpacing: -1, cursor: 'pointer' }}>
           amazon<Box component="span" sx={{ color: '#ff9900' }}>.vn</Box>
         </Typography>
 
-        {/* Thanh tìm kiếm */}
         <Box sx={{ flexGrow: 1, display: 'flex', bgcolor: 'white', borderRadius: 1, overflow: 'hidden' }}>
           <Box sx={{ bgcolor: '#f3f3f3', px: 2, py: 1, color: 'text.secondary', borderRight: '1px solid #ddd', display: { xs: 'none', md: 'block' } }}>
             All
           </Box>
           <InputBase placeholder="Search Amazon" sx={{ px: 2, flexGrow: 1, color: 'black' }} />
           <Box sx={{ bgcolor: '#febd69', px: 2, display: 'flex', alignItems: 'center', cursor: 'pointer', '&:hover': { bgcolor: '#f3a847' } }}>
-            {/* Đã thêm as any để bypass lỗi icon */}
             <Iconify icon={"eva:search-fill" as any} color="black" width={24} />
           </Box>
         </Box>
 
-        {/* Nút Giỏ hàng */}
-        <Box sx={{ display: 'flex', alignItems: 'flex-end', cursor: 'pointer', gap: 0.5 }} onClick={() => setIsCartOpen(true)}>
-          <Badge badgeContent={cart.reduce((total, item) => total + item.quantity, 0)} color="error" sx={{ '& .MuiBadge-badge': { right: 5, top: 5, fontWeight: 'bold' } }}>
-            {/* Đã thêm as any */}
-            <Iconify icon={"solar:cart-large-minimalistic-bold" as any} width={38} color="white" />
-          </Badge>
-          <Typography variant="subtitle2" sx={{ fontWeight: 'bold', display: { xs: 'none', md: 'block' }, mb: 0.5 }}>Cart</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          {/* 👇 ĐÃ THÊM: Nút Đăng Xuất */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', cursor: 'pointer', '&:hover': { color: '#ff9900' } }} onClick={handleLogout}>
+            <Typography variant="caption" sx={{ color: '#ccc', lineHeight: 1 }}>Hello, User</Typography>
+            <Typography variant="subtitle2" sx={{ fontWeight: 'bold', lineHeight: 1 }}>Sign Out</Typography>
+          </Box>
+
+          {/* Nút Giỏ hàng */}
+          <Box sx={{ display: 'flex', alignItems: 'flex-end', cursor: 'pointer', gap: 0.5 }} onClick={() => setIsCartOpen(true)}>
+            <Badge badgeContent={cart.reduce((total, item) => total + item.quantity, 0)} color="error" sx={{ '& .MuiBadge-badge': { right: 5, top: 5, fontWeight: 'bold' } }}>
+              <Iconify icon={"solar:cart-large-minimalistic-bold" as any} width={38} color="white" />
+            </Badge>
+            <Typography variant="subtitle2" sx={{ fontWeight: 'bold', display: { xs: 'none', md: 'block' }, mb: 0.5 }}>Cart</Typography>
+          </Box>
         </Box>
       </Box>
 
       {/* 2. SUB-HEADER MENU */}
       <Box sx={{ bgcolor: '#232f3e', color: 'white', px: 2, py: 1, display: 'flex', gap: 3, overflowX: 'auto', typography: 'body2' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, cursor: 'pointer', fontWeight: 'bold' }}>
-          {/* Đã thêm as any */}
           <Iconify icon={"eva:menu-fill" as any} /> All
         </Box>
         {['Today\'s Deals', 'Customer Service', 'Registry', 'Gift Cards', 'Sell'].map((item) => (
@@ -101,13 +141,7 @@ export function ShopView() {
       </Box>
 
       {/* 3. HERO BANNER */}
-      <Box 
-        sx={{ 
-          height: { xs: 200, md: 350 }, 
-          background: 'linear-gradient(to bottom, #d9a7c7, #eaeded)', 
-          position: 'relative' 
-        }}
-      >
+      <Box sx={{ height: { xs: 200, md: 350 }, background: 'linear-gradient(to bottom, #d9a7c7, #eaeded)', position: 'relative' }}>
         <Typography variant="h3" sx={{ textAlign: 'center', pt: 5, color: '#333', fontWeight: 'bold' }}>
           Kitchen essentials
           <Typography variant="h5" sx={{ display: 'block', fontWeight: 'normal' }}>Under $50</Typography>
@@ -123,29 +157,13 @@ export function ShopView() {
             {products.map((product) => (
               <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
                 <Card sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 0 }}>
-                  <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }} noWrap>
-                    {product.name}
-                  </Typography>
-                  
+                  <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }} noWrap>{product.name}</Typography>
                   <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center', mb: 2 }}>
-                    <Box
-                      component="img"
-                      src={product.images && product.images.length > 0 ? `${CONFIG.serverUrl}${product.images[0].imageUrl}` : product.coverUrl || '/assets/images/product/product_1.jpg'}
-                      sx={{ height: 200, objectFit: 'contain' }}
-                    />
+                    <Box component="img" src={product.images && product.images.length > 0 ? `${CONFIG.serverUrl}${product.images[0].imageUrl}` : product.coverUrl || '/assets/images/product/product_1.jpg'} sx={{ height: 200, objectFit: 'contain' }} />
                   </Box>
-
                   <Typography variant="h5" sx={{ mb: 1 }}>{fCurrency(product.price)}</Typography>
-                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 2, flexGrow: 1 }}>
-                    {product.category?.name || 'Chưa phân loại'}
-                  </Typography>
-
-                  <Button 
-                    fullWidth 
-                    variant="contained" 
-                    sx={{ bgcolor: '#ffd814', color: 'black', borderRadius: 5, '&:hover': { bgcolor: '#f7ca00' }, textTransform: 'none', fontWeight: 'bold' }}
-                    onClick={() => handleAddToCart(product)}
-                  >
+                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 2, flexGrow: 1 }}>{product.category?.name || 'Chưa phân loại'}</Typography>
+                  <Button fullWidth variant="contained" sx={{ bgcolor: '#ffd814', color: 'black', borderRadius: 5, '&:hover': { bgcolor: '#f7ca00' }, textTransform: 'none', fontWeight: 'bold' }} onClick={() => handleAddToCart(product)}>
                     Add to cart
                   </Button>
                 </Card>
@@ -160,13 +178,15 @@ export function ShopView() {
         <Box sx={{ width: { xs: '100vw', sm: 400 }, p: 3, display: 'flex', flexDirection: 'column', height: '100%' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="h5" fontWeight="bold">Subtotal</Typography>
-            {/* Đã thêm as any */}
             <IconButton onClick={() => setIsCartOpen(false)}><Iconify icon={"mingcute:close-line" as any} /></IconButton>
           </Box>
           <Typography variant="h4" color="error" fontWeight="bold" sx={{ mb: 3 }}>{fCurrency(totalAmount)}</Typography>
+          
+          {/* Nút Checkout gọi VNPAY */}
           <Button fullWidth variant="contained" sx={{ bgcolor: '#ffd814', color: 'black', borderRadius: 5, py: 1.5, mb: 3, '&:hover': { bgcolor: '#f7ca00' } }} onClick={handleCheckout}>
-            Proceed to Checkout
+            Proceed to Checkout (VNPAY)
           </Button>
+          
           <Divider sx={{ mb: 2 }} />
           <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
             {cart.map((item) => (
@@ -177,7 +197,6 @@ export function ShopView() {
                   <Typography variant="body2" sx={{ color: '#B12704', fontWeight: 'bold' }}>{fCurrency(item.price)}</Typography>
                   <Typography variant="caption" sx={{ color: 'text.secondary' }}>Qty: {item.quantity}</Typography>
                 </Box>
-                {/* Đã thêm as any */}
                 <IconButton color="error" size="small" onClick={() => handleRemoveFromCart(item.id)} sx={{ alignSelf: 'flex-start' }}><Iconify icon={"solar:trash-bin-trash-bold" as any} /></IconButton>
               </Stack>
             ))}
